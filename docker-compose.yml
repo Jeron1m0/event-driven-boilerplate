@@ -38,7 +38,17 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-
+  node-be:
+    container_name: node01
+    image: webapp/node-be
+    environment:
+      BACKEND_PORT: 5000
+    ports: 
+      - 5000:5000
+    build:
+      context: ./node-be
+      target: production
+    command: npm run start
 
 
 volumes:
