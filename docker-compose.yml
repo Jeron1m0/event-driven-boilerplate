@@ -50,17 +50,14 @@ services:
       target: production
     command: npm run start
 
-  vue-be:
+  vue-fe:
     container_name: vue01
     image: webapp/vue-fe
     ports: 
-      - 8080:8080
+      - 8080:80
     build:
       context: ./vue-fe
-      target: development
-    volumes: 
-      - ./vue-fe:/app
-    command: npm run dev
+
 
 
 volumes:

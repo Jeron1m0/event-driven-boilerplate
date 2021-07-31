@@ -1,28 +1,13 @@
-# https://github.com/cypress-io/cypress-docker-images/tree/master/base
-FROM cypress/base:10.16.0 As development
-
-WORKDIR /usr/src/app
-
+# Compile stage
+FROM node:lts-alpine as build-stage
+WORKDIR /app
 COPY package*.json ./
-
-RUN npm install --unsafe-perm && npm cache clean --force --loglevel=error
-
+RUN npm install
 COPY . .
+RUN npm run build
 
-EXPOSE 5000
-
-CMD ["npm","dev"]
-
-
-# https://github.com/cypress-io/cypress-docker-images/tree/master/base
-FROM cypress/base:10.16.0 as production
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install --only=production --unsafe-perm && npm cache clean --force --loglevel=error
-
-COPY . .
-
-CMD ["npm","start"]
+# Peoduction stage
+FROM nginx:1.13.12-alpine as production-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
