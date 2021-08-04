@@ -1,5 +1,21 @@
 version: '3'
 services:
+
+  traefik:
+    image: "traefik:v2.4"
+    container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
   grafana:
     image: "grafana/grafana"
     container_name: grafana01
@@ -8,6 +24,15 @@ services:
     environment:
       GF_PATHS_DATA : /var/lib/grafana
       GF_SECURITY_ADMIN_PASSWORD : kafka
+      GF_SERVER_PROTOCOL: http
+      GF_SERVER_DOMAIN: localhost
+      GF_SERVER_ROOT_URL: https://localhost/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=PathPrefix(`/grafana`)"
+      - "traefik.http.routers.backend.entrypoints=web"  
+      - "traefik.http.middlewares.backend.stripprefix.prefixes=/grafana"
     volumes:
      - ./configuration/grafana/provisioning:/etc/grafana/provisioning
      - ./configuration/grafana/dashboards:/var/lib/grafana/dashboards

@@ -1,5 +1,19 @@
 version: '2.2'
 services:
+  traefik:
+    image: "traefik:v2.4"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      #- "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      #- "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
     container_name: es01
@@ -54,14 +68,48 @@ services:
     container_name: vue01
     image: webapp/vue-fe
     ports: 
-      - 8080:80
+      - 8081:80
     build:
       context: ./vue-fe
 
 
+  mongo:
+    image: mongo:5.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: kloadgen
+      MONGO_INITDB_ROOT_PASSWORD: kloadgen
+    volumes:
+      - mongo:/var/lib/mongo
+      - mongodb:/data/db
+  
+  mongoexpress:
+    image: mongo-express:latest
+    container_name: mongo-express
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: kloadgen
+      ME_CONFIG_MONGODB_ADMINPASSWORD: kloadgen
+      ME_CONFIG_BASICAUTH_USERNAME: 'admin'
+      ME_CONFIG_BASICAUTH_PASSWORD: 'kloadgen'
+      ME_CONFIG_SITE_BASEURL: /mongo-express/
+    labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.backend.rule=PathPrefix(`/mongo-express`)"
+        - "traefik.http.routers.backend.entrypoints=web"  
+        - "traefik.http.middlewares.backend.stripprefix.prefixes=/mongo-express" 
+    ports:
+      - "8090:8081"
 
 volumes:
   data01:
+    driver: local
+  mongo:
+    driver: local
+  mongodb:
     driver: local
 
 
